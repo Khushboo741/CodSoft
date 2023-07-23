@@ -1,0 +1,145 @@
+import tkinter as tk
+
+def add_item():
+    task = entry.get()
+    if task:
+        tasks.append(task)
+        entry.delete(0, tk.END)
+        update_task_list()
+        entry.focus_set()  # Set focus on another widget to make the input box lose focus
+
+def update_task_list():
+    for widget in task_section.winfo_children():
+        widget.destroy()
+
+    for i, task in enumerate(tasks):
+        task_frame = tk.Frame(task_section, bg='white', bd=1, relief=tk.SOLID)  # Add border here
+        task_frame.pack(fill=tk.X)
+
+        delete_frame = tk.Frame(task_frame, bg='white')
+        delete_frame.pack(side=tk.RIGHT, padx=5)
+
+        edit_button = tk.Button(delete_frame, text='Edit', bg='green', fg='white', command=lambda i=i: enable_edit(i))
+        edit_button.pack(side=tk.LEFT)
+
+        delete_button = tk.Button(delete_frame, text='Delete', bg='red', fg='white', command=lambda i=i: delete_item(i))
+        delete_button.pack(side=tk.LEFT)
+
+        task_label = tk.Label(task_frame, text=task, bg='white', width=30)
+        task_label.pack(side=tk.LEFT, padx=5, pady=5)
+
+def enable_edit(index):
+    task_frame = task_section.winfo_children()[index]
+    task_label = None
+
+    for widget in task_frame.winfo_children():
+        if isinstance(widget, tk.Label):
+            task_label = widget
+            break
+
+    if task_label:
+        task_label.pack_forget()
+        entry.delete(0, tk.END)
+        entry.insert(0, tasks[index])
+        entry.pack(side=tk.LEFT, padx=5, pady=5)
+        entry.focus()
+
+        edit_button = task_frame.winfo_children()[0].winfo_children()[0]
+        edit_button.config(text='Save', bg='green', command=lambda i=index: save_item(i))
+
+        submit.config(text='Edit', command=lambda i=index: save_item(i))
+
+def save_item(index):
+    task_frame = task_section.winfo_children()[index]
+    task_label = None
+
+    for widget in task_frame.winfo_children():
+        if isinstance(widget, tk.Label):
+            task_label = widget
+            break
+
+    new_task = entry.get()
+
+    if new_task:
+        tasks[index] = new_task
+        entry.delete(0, tk.END)
+        task_label.config(text=new_task)
+
+        # Show success message
+        success_label.config(text='Text edited successfully', fg='green')
+        success_label.place(x=160, y=120,anchor='e')
+
+        # Schedule the message disappearance after 2000 milliseconds (2 seconds)
+        root.after(2000, hide_success_message)
+
+    edit_button = task_frame.winfo_children()[0].winfo_children()[0]
+    edit_button.config(text='Edit', bg='green', command=lambda i=index: enable_edit(i))
+
+    submit.config(text='Submit', command=add_item)
+
+    update_task_list()  # Call update_task_list to instantly display the updated name
+
+def hide_success_message():
+    success_label.place_forget()
+
+def delete_item(index):
+    if 0 <= index < len(tasks):
+        del tasks[index]
+        update_task_list()
+
+def bind_focus_events(event):
+    entry.config(highlightbackground="sky blue", highlightcolor="sky blue", highlightthickness=2)
+
+def unbind_focus_events(event):
+    entry.config(highlightbackground="black", highlightcolor="black", highlightthickness=1)
+
+# Main window
+root = tk.Tk()
+root.title('ToDo List')
+root.geometry('400x500')
+
+# Container
+container = tk.Frame(root)
+container.pack(fill=tk.BOTH, expand=True)
+
+# Heading Section
+heading = tk.Label(container, text='ToDo List', bg='green', fg='white', font=('Arial', 20, 'bold'))
+heading.pack(fill=tk.X)
+
+# Body Section
+body = tk.Frame(container, bg='white')
+body.pack(fill=tk.BOTH, expand=True)
+
+# Add Items Section
+add_items_label = tk.Label(body, text='Add Items', bg='white', font=('Arial', 12, 'bold'))
+add_items_label.pack(pady=10, anchor=tk.W)
+
+input_frame = tk.Frame(body, bg='white')
+input_frame.pack()
+
+entry = tk.Entry(input_frame, bg='white', width=30)
+entry.pack(side=tk.LEFT, padx=5)
+
+submit = tk.Button(input_frame, text='Submit', bg='grey', command=add_item)
+submit.pack(side=tk.RIGHT, padx=5)
+
+entry.bind("<FocusIn>", bind_focus_events)
+entry.bind("<Button-1>", bind_focus_events)  # Bind the function to <Button-1> event as well
+
+submit.bind("<Button-1>", unbind_focus_events)
+
+# Task Section
+task_label = tk.Label(body, text='Task', bg='white', font=('Arial', 12, 'bold'))
+task_label.pack(pady=10, anchor=tk.W)
+
+# Section to display tasks
+task_section = tk.Frame(body, bg='white')
+task_section.pack(fill=tk.X, padx=5, pady=5)
+
+tasks = []
+
+# Success Message Label
+success_label = tk.Label(body, text='', bg='white', font=('Arial', 10), fg='green', anchor='w')
+success_label.pack()
+
+root.mainloop()
